@@ -32,26 +32,49 @@ class MiniGraph:
             # in self.miniGraph is wanted subgraph
             self.miniGraph = graph.subgraph(self.nodes)
             self.impactScore = {node: float(0.0)  for node in self.nodes}
+            self.setLabels()
+            self.color = '#78b41f' 
+
+    def setLabels(self):
+        self.labels = {}
+        for term, name in self.names.items():
+            text = '['+ name +'; '+ str(self.impactScore[term]) +']'
+            self.labels[term] = text
 
     #newScore is dictionary (node : score)
     def changeScore(self, newScore):
         self.impactScore = newScore
+        self.setLabels()
 
     def showGraph(self):
-        plt.subplot(121)
-        networkx.draw(self.miniGraph, labels = self.names)
+        plt.subplot(122)
+        positions = networkx.spectral_layout(self.miniGraph)
+        #positions = networkx.planar_layout(self.miniGraph)
+        #trying different colors:  node_color=self.color
+        networkx.draw_networkx(self.miniGraph, pos=positions, node_color='#78b41f', labels=self.labels)
         plt.show()
 
     def add(self, graph1, graph2):
         self.impactScore = graph1.impactScore.copy()
-        for term, score in graph2.impactScore.items():
-            if term in self.impactScore:
-                self.impactScore[term] += score
-            else:
-               self.impactScore[term] = score
+        graph2copy = graph2.impactScore.copy()
+        colorsToAdd = len(graph2copy)-1
+        self.color = ['#78b41f' for term in self.impactScore]
+        i = -1
+        for term in self.impactScore.items():
+            i+=1
+            if term in graph2copy:
+                self.impactScore[term] += graph2copy[term]
+                graph2copy.pop(term)
+                self.colors[i] = '#b41f78'
+                colorsToAdd-=1
+        for term, score in graph2copy.items():
+            self.impactScore[term] = score
+        for c in range(colorsToAdd-1):
+            self.color.append('#1f78b4')
         self.nodes = self.impactScore.keys()
         self.names = {term: id_to_name[term] for term in self.nodes}
         self.miniGraph = graph.subgraph(self.nodes)
+        self.setLabels()
 
 print("Enter genes:")
 genes = input().strip().split(" ")
